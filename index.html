@@ -1,801 +1,1317 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bootes Monitoring System</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bootes Monitoring System</title>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
 
-        .container {
-            display: flex;
-            height: 100vh;
-        }
+  <style>
+    :root {
+      --gradient-dark: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      --text-light: #f9fafb;
+      --accent-teal: #0d9488;
+      --card-shadow: 0 6px 30px rgba(31, 41, 55, 0.08);
+    }
 
-        /* Sidebar Styles */
-        .sidebar {
-            width: 280px;
-            background: #1a1d29;
-            color: #fff;
-            padding: 20px;
-            transition: all 0.3s ease;
-            overflow-y: auto;
-        }
+    /* base */
+    html,
+    body {
+      height: 100%;
+      box-sizing: border-box
+    }
 
-        .sidebar.collapsed {
-            width: 80px;
-        }
+    *,
+    *::before,
+    *::after {
+      box-sizing: inherit
+    }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 40px;
-            padding: 10px;
-        }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f9fafb;
+      color: #374151;
+      overflow-x: hidden;
+      transition: background .25s, color .25s;
+    }
 
-        .logo-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
+    body.sidebar-open {
+      overflow: hidden;
+      position: fixed;
+      width: 100%
+    }
 
-        .logo-text {
-            font-size: 16px;
-            font-weight: 600;
-            line-height: 1.3;
-            transition: opacity 0.3s;
-        }
+    body.dark-mode {
+      background: #0f1720;
+      color: #cbd5e1
+    }
 
-        .sidebar.collapsed .logo-text {
-            opacity: 0;
-            display: none;
-        }
+    /* sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100vh;
+      background: var(--gradient-dark);
+      color: var(--text-light);
+      padding: 20px 0;
+      box-shadow: 5px 0 15px rgba(31, 41, 55, 0.28);
+      z-index: 1000;
+      transition: transform .28s ease, width .28s ease;
+      display: flex;
+      flex-direction: column;
+    }
 
-        .project-select {
-            margin-bottom: 30px;
-        }
+    .sidebar-header {
+      text-align: center;
+      margin-bottom: 14px;
+      padding: 10px 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
 
-        .project-select label {
-            display: block;
-            font-size: 12px;
-            color: #8b92a7;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+    .sidebar .logo {
+      height: 82px;
+      width: 82px;
+      margin-bottom: 8px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.20);
+      object-fit: contain;
+    }
 
-        .project-select select {
-            width: 100%;
-            padding: 12px;
-            background: #252836;
-            border: 1px solid #2d3142;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+    .sidebar-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-light);
+      text-align: center
+    }
 
-        .project-select select:hover {
-            border-color: #667eea;
-        }
+    /* project selector + nav */
+    .project-selector {
+      padding: 0 14px;
+      margin-bottom: 10px
+    }
 
-        .sidebar.collapsed .project-select {
-            display: none;
-        }
+    .project-selector label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-light);
+      font-size: .9rem
+    }
 
-        .nav-menu {
-            list-style: none;
-        }
+    /* project selector styling: dark closed, readable open options */
+    .project-selector select {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text-light);
+      font-size: .95rem;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
 
-        .nav-item {
-            margin-bottom: 8px;
-        }
+    /* make native options readable when dropdown opens */
+    .project-selector select option {
+      background: #ffffff;
+      /* white background for options */
+      color: #111827;
+      /* dark text for options */
+    }
 
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 14px 16px;
-            color: #8b92a7;
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.3s;
-            cursor: pointer;
-            font-size: 14px;
-        }
+    /* increase stacking so dropdown isn't clipped */
+    .project-selector select:focus {
+      position: relative;
+      z-index: 2500;
+    }
 
-        .nav-link:hover {
-            background: #252836;
-            color: #fff;
-        }
+    /* optional: force dropdown arrow color */
+    .project-selector select::-ms-expand {
+      display: none;
+    }
 
-        .nav-link.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-        }
+    .nav-main {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 8px
+    }
 
-        .nav-icon {
-            font-size: 20px;
-            flex-shrink: 0;
-        }
+    .nav-main ul {
+      list-style: none;
+      padding: 0 6px;
+      margin: 0
+    }
 
-        .sidebar.collapsed .nav-link span:not(.nav-icon) {
-            display: none;
-        }
+    .nav-main li {
+      margin-bottom: 6px
+    }
 
-        .toggle-btn {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 40px;
-            height: 40px;
-            background: #252836;
-            border: none;
-            border-radius: 50%;
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
+    .nav-main a {
+      display: flex;
+      align-items: center;
+      color: var(--text-light) !important;
+      padding: 12px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all .18s;
+      font-weight: 500;
+      gap: 10px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
 
-        .toggle-btn:hover {
-            background: #667eea;
-            transform: scale(1.1);
-        }
+    .nav-main a:hover,
+    .nav-main a.active {
+      background: rgba(13, 148, 136, 0.12);
+      color: var(--accent-teal) !important;
+      border-left: 4px solid var(--accent-teal);
+    }
 
-        /* Main Content Styles */
-        .main-content {
-            flex: 1;
-            padding: 40px;
-            overflow-y: auto;
-        }
+    .nav-main i {
+      width: 22px;
+      margin-right: 10px;
+      text-align: center;
+      font-size: 18px
+    }
 
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px 40px;
-            border-radius: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
+    /* footer */
+    .sidebar-footer {
+      padding: 12px 0 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-        .header h1 {
-            font-size: 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    .user-info {
+      text-align: center;
+      color: var(--text-light);
+    }
 
-        .content-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            animation: fadeIn 0.5s ease;
-        }
+    .user-info p {
+      margin: 0 0 8px 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    .user-info button {
+      width: 100%;
+      font-size: 0.85rem;
+    }
 
-        .content-title {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 26px;
-            font-weight: 600;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #f0f0f0;
-            color: #1a1d29;
-        }
+    /* collapsed */
+    .sidebar.collapsed {
+      width: 64px !important;
+      overflow: visible
+    }
 
-        .content-title-icon {
-            font-size: 32px;
-        }
+    .sidebar.collapsed .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      margin-bottom: 6px
+    }
 
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
+    .sidebar.collapsed .sidebar-title,
+    .sidebar.collapsed .project-selector {
+      display: none !important
+    }
 
-        .info-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 25px;
-            border-radius: 15px;
-            color: white;
-            transition: transform 0.3s;
-        }
+    .sidebar.collapsed .nav-main {
+      overflow: hidden !important;
+      height: auto
+    }
 
-        .info-card:hover {
-            transform: translateY(-5px);
-        }
+    .sidebar.collapsed .nav-main::-webkit-scrollbar {
+      display: none
+    }
 
-        .info-card h3 {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 10px;
-        }
+    .sidebar.collapsed .nav-main a {
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+      font-size: 0
+    }
 
-        .info-card p {
-            font-size: 24px;
-            font-weight: 600;
-        }
+    .sidebar.collapsed .nav-main a i {
+      font-size: 18px;
+      margin-right: 0;
+      display: inline-block
+    }
 
-        .data-table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
+    .sidebar.collapsed .sidebar-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
 
-        .data-table thead {
-            background: #f8f9fa;
-        }
+    .sidebar.collapsed .user-info {
+      display: none;
+    }
 
-        .data-table th {
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            color: #1a1d29;
-            border-bottom: 2px solid #e0e0e0;
-        }
+    /* main content */
+    .main-content {
+      margin-left: 280px;
+      min-height: 100vh;
+      padding: 20px;
+      transition: margin-left .28s ease, padding .28s
+    }
 
-        .data-table td {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #555;
-        }
+    .main-content.sidebar-collapsed {
+      margin-left: 64px
+    }
 
-        .data-table tr:hover {
-            background: #f8f9fa;
-        }
+    /* tab content size responsive: will expand when sidebar collapses */
+    .tab-content {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 20px;
+      max-width: calc(100% - 60px);
+      transition: max-width .28s ease;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+    }
 
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+    .main-content.sidebar-collapsed .tab-content {
+      max-width: calc(100% - 40px);
+    }
 
-        .status-active {
-            background: #d4edda;
-            color: #155724;
-        }
+    /* hero */
+    .dashboard-hero {
+      background: var(--gradient-dark);
+      color: var(--text-light);
+      padding: 30px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(31, 41, 55, 0.25)
+    }
 
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
+    #heroTitle {
+      margin: 0;
+      font-size: 2.2rem;
+      font-weight: 700
+    }
 
-        .image-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
+    /* tab-pane heading */
+    .tab-pane h2 {
+      color: #0b1220;
+      font-weight: 700;
+      border-bottom: 3px solid var(--accent-teal);
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center
+    }
 
-        .image-item {
-            aspect-ratio: 1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 48px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
+    .tab-pane h2 i {
+      margin-right: 10px
+    }
 
-        .image-item:hover {
-            transform: scale(1.05);
-        }
+    /* dark mode adjustments for tab content / heading */
+    body.dark-mode .tab-content {
+      background: #0f1720;
+      color: #cbd5e1;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55)
+    }
 
-        .tab-content {
-            display: none;
-        }
+    body.dark-mode .tab-pane h2 {
+      color: #e6eef8;
+      border-bottom: 3px solid rgba(13, 148, 136, 0.6)
+    }
 
-        .tab-content.active {
-            display: block;
-        }
+    body.dark-mode .tab-pane h2 i {
+      color: #e6eef8
+    }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+    /* small screens & overlay */
+    .main-content::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 990;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .28s, visibility .28s
+    }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
+    body.sidebar-open .main-content::before {
+      opacity: 1;
+      visibility: visible
+    }
 
-        .stats-row {
-            display: flex;
-            gap: 20px;
-            margin: 20px 0;
-        }
+    .toggle-btn {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 1001;
+      background: var(--gradient-dark);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 1.2em;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      align-items: center;
+      justify-content: center
+    }
 
-        .stat-box {
-            flex: 1;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-        }
+    /* bottom-left arrow (floating) - left set by JS */
+    .sidebar-toggle-bottom {
+      position: fixed;
+      bottom: 20px;
+      z-index: 1100;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--gradient-dark);
+      color: white;
+      border: none;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: left .28s ease, transform .12s ease;
+    }
 
-        .stat-box h4 {
-            color: #8b92a7;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
+    .sidebar-toggle-bottom:active {
+      transform: scale(.98)
+    }
 
-        .stat-box p {
-            font-size: 28px;
-            font-weight: 600;
-            color: #1a1d29;
-        }
-    </style>
+    .sidebar-toggle-bottom .fa-chevron-left,
+    .sidebar-toggle-bottom .fa-chevron-right {
+      font-size: 1.05rem
+    }
+
+    /* responsive rules */
+    @media (max-width:768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 280px
+      }
+
+      .sidebar.open {
+        transform: translateX(0)
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 12px
+      }
+
+      .tab-content {
+        padding: 20px
+      }
+
+      .toggle-btn {
+        display: flex
+      }
+
+      .sidebar.collapsed {
+        width: 280px
+      }
+
+      .main-content.sidebar-collapsed {
+        margin-left: 0
+      }
+
+      .tab-content {
+        max-width: calc(100% - 48px)
+      }
+
+      .main-content.sidebar-collapsed .tab-content {
+        max-width: calc(100% - 48px)
+      }
+
+      /* MOBILE FIX: नीचे वाले arrow button को छुपाना */
+      .sidebar-toggle-bottom {
+        display: none;
+      }
+    }
+
+    /* small visual tweaks for project cards inside tab */
+    .bg-light {
+      background: #f3f6f7 !important
+    }
+
+    body.dark-mode .bg-light {
+      background: #253038 !important
+    }
+
+    /* Loading overlay for tab refresh */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .loading-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    body.dark-mode .loading-overlay {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .refresh-spinner {
+      width: 80px;
+      height: 80px;
+      border: 6px solid var(--accent-teal);
+      border-top: 6px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      position: relative;
+    }
+
+    .refresh-spinner::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      background: var(--accent-teal);
+      border-radius: 50%;
+      animation: pulse 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.2); opacity: 0.7; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="logo">
-                <div class="logo-icon">🅱️</div>
-                <div class="logo-text">Bootes Monitoring System</div>
-            </div>
+  <!-- top hamburger mobile -->
+  <button id="toggleBtn" class="toggle-btn" aria-label="Toggle sidebar"><i class="fas fa-bars"></i></button>
 
-            <div class="project-select">
-                <label>Select Project</label>
-                <select id="projectSelect">
-                    <option value="gdlv">GDLV</option>
-                    <option value="project2">Project Alpha</option>
-                    <option value="project3">Project Beta</option>
-                </select>
-            </div>
-
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a class="nav-link" data-tab="project-info">
-                        <span class="nav-icon">ℹ️</span>
-                        <span>Project Info</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-tab="work-activity">
-                        <span class="nav-icon">📊</span>
-                        <span>Work Activity</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-tab="manpower">
-                        <span class="nav-icon">👥</span>
-                        <span>Manpower</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-tab="staff-record">
-                        <span class="nav-icon">👤</span>
-                        <span>Staff Record</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" data-tab="material-received">
-                        <span class="nav-icon">🚚</span>
-                        <span>Material Received</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-tab="material-consumption">
-                        <span class="nav-icon">📦</span>
-                        <span>Material Consumption</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-tab="images">
-                        <span class="nav-icon">🖼️</span>
-                        <span>Images</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-tab="compare-images">
-                        <span class="nav-icon">🔄</span>
-                        <span>Compare Images</span>
-                    </a>
-                </li>
-            </ul>
-
-            <button class="toggle-btn" id="toggleBtn">◀</button>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <div class="header">
-                <h1>Welcome to GDLV Project</h1>
-            </div>
-
-            <!-- Project Info Tab -->
-            <div class="tab-content" id="project-info">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">ℹ️</span>
-                        Project Information
-                    </h2>
-                    <div class="info-grid">
-                        <div class="info-card">
-                            <h3>Project Name</h3>
-                            <p>GDLV Construction</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Location</h3>
-                            <p>New Delhi, India</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Start Date</h3>
-                            <p>Jan 15, 2024</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Completion</h3>
-                            <p>65%</p>
-                        </div>
-                    </div>
-                    <div class="stats-row">
-                        <div class="stat-box">
-                            <h4>Total Budget</h4>
-                            <p>₹25.5 Cr</p>
-                        </div>
-                        <div class="stat-box">
-                            <h4>Spent</h4>
-                            <p>₹16.6 Cr</p>
-                        </div>
-                        <div class="stat-box">
-                            <h4>Remaining</h4>
-                            <p>₹8.9 Cr</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Work Activity Tab -->
-            <div class="tab-content" id="work-activity">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">📊</span>
-                        Work Activity
-                    </h2>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Activity</th>
-                                <th>Status</th>
-                                <th>Progress</th>
-                                <th>Team</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Foundation Work</td>
-                                <td><span class="status-badge status-active">Completed</span></td>
-                                <td>100%</td>
-                                <td>Team A</td>
-                            </tr>
-                            <tr>
-                                <td>Steel Structure</td>
-                                <td><span class="status-badge status-active">Active</span></td>
-                                <td>75%</td>
-                                <td>Team B</td>
-                            </tr>
-                            <tr>
-                                <td>Electrical Wiring</td>
-                                <td><span class="status-badge status-pending">Pending</span></td>
-                                <td>30%</td>
-                                <td>Team C</td>
-                            </tr>
-                            <tr>
-                                <td>Plumbing Installation</td>
-                                <td><span class="status-badge status-active">Active</span></td>
-                                <td>60%</td>
-                                <td>Team D</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Manpower Tab -->
-            <div class="tab-content" id="manpower">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">👥</span>
-                        Manpower Distribution
-                    </h2>
-                    <div class="info-grid">
-                        <div class="info-card">
-                            <h3>Total Workers</h3>
-                            <p>248</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Engineers</h3>
-                            <p>15</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Supervisors</h3>
-                            <p>8</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Contractors</h3>
-                            <p>12</p>
-                        </div>
-                    </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Department</th>
-                                <th>Workers</th>
-                                <th>Shift</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Civil Construction</td>
-                                <td>85</td>
-                                <td>Day Shift</td>
-                            </tr>
-                            <tr>
-                                <td>Electrical</td>
-                                <td>42</td>
-                                <td>Day Shift</td>
-                            </tr>
-                            <tr>
-                                <td>Plumbing</td>
-                                <td>38</td>
-                                <td>Both Shifts</td>
-                            </tr>
-                            <tr>
-                                <td>Finishing</td>
-                                <td>55</td>
-                                <td>Day Shift</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Staff Record Tab -->
-            <div class="tab-content" id="staff-record">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">👤</span>
-                        Staff Records
-                    </h2>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Position</th>
-                                <th>Department</th>
-                                <th>Contact</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Rajesh Kumar</td>
-                                <td>Site Manager</td>
-                                <td>Management</td>
-                                <td>+91 98765 43210</td>
-                            </tr>
-                            <tr>
-                                <td>Priya Singh</td>
-                                <td>Civil Engineer</td>
-                                <td>Engineering</td>
-                                <td>+91 98765 43211</td>
-                            </tr>
-                            <tr>
-                                <td>Amit Patel</td>
-                                <td>Electrical Supervisor</td>
-                                <td>Electrical</td>
-                                <td>+91 98765 43212</td>
-                            </tr>
-                            <tr>
-                                <td>Sunita Sharma</td>
-                                <td>Safety Officer</td>
-                                <td>Safety</td>
-                                <td>+91 98765 43213</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Material Received Tab -->
-            <div class="tab-content active" id="material-received">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">🚚</span>
-                        Material Received
-                    </h2>
-                    <p style="color: #666; margin-bottom: 20px;">Track all received materials for the project.</p>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Material</th>
-                                <th>Quantity</th>
-                                <th>Date Received</th>
-                                <th>Supplier</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Cement (bags)</td>
-                                <td>500</td>
-                                <td>Dec 15, 2024</td>
-                                <td>ACC Limited</td>
-                            </tr>
-                            <tr>
-                                <td>Steel Rods (tons)</td>
-                                <td>25</td>
-                                <td>Dec 14, 2024</td>
-                                <td>TATA Steel</td>
-                            </tr>
-                            <tr>
-                                <td>Bricks (units)</td>
-                                <td>10,000</td>
-                                <td>Dec 13, 2024</td>
-                                <td>Local Supplier</td>
-                            </tr>
-                            <tr>
-                                <td>Sand (cubic meters)</td>
-                                <td>50</td>
-                                <td>Dec 12, 2024</td>
-                                <td>River Sand Co.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Material Consumption Tab -->
-            <div class="tab-content" id="material-consumption">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">📦</span>
-                        Material Consumption
-                    </h2>
-                    <div class="info-grid">
-                        <div class="info-card">
-                            <h3>Cement Used</h3>
-                            <p>325 bags</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Steel Used</h3>
-                            <p>18 tons</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Bricks Used</h3>
-                            <p>7,500 units</p>
-                        </div>
-                        <div class="info-card">
-                            <h3>Sand Used</h3>
-                            <p>38 m³</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Images Tab -->
-            <div class="tab-content" id="images">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">🖼️</span>
-                        Project Images
-                    </h2>
-                    <div class="image-gallery">
-                        <div class="image-item">📷</div>
-                        <div class="image-item">📷</div>
-                        <div class="image-item">📷</div>
-                        <div class="image-item">📷</div>
-                        <div class="image-item">📷</div>
-                        <div class="image-item">📷</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Compare Images Tab -->
-            <div class="tab-content" id="compare-images">
-                <div class="content-card">
-                    <h2 class="content-title">
-                        <span class="content-title-icon">🔄</span>
-                        Compare Images
-                    </h2>
-                    <p style="color: #666; margin-bottom: 20px;">Compare before and after project images to track progress.</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
-                        <div>
-                            <h3 style="margin-bottom: 15px; color: #1a1d29;">Before</h3>
-                            <div class="image-item" style="height: 300px;">📷</div>
-                        </div>
-                        <div>
-                            <h3 style="margin-bottom: 15px; color: #1a1d29;">After</h3>
-                            <div class="image-item" style="height: 300px;">📷</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+  <aside id="sidebar" class="sidebar" role="navigation" aria-label="Main sidebar">
+    <div class="sidebar-header">
+      <img src="Bootes Logo.png" alt="Bootes Logo" class="logo">
+      <div class="sidebar-title">Bootes Monitoring System</div>
     </div>
 
-    <script>
-        // Tab switching functionality
-        const navLinks = document.querySelectorAll('.nav-link');
-        const tabContents = document.querySelectorAll('.tab-content');
+    <div class="project-selector">
+   
+      <select id="projectSelect" aria-label="Search Site">
+        <option value="">Search Site </option>
+        <option>GDLV</option>
+        <option>HKD</option>
+        <option>HIH</option>
+        <option>B-47</option>
+        <option>SLH</option>
+        <option>RWH</option>
+        <option>RSTF</option>
+        <option>JEX</option>
+        <option>SBGM</option>
+        <option>VRI</option>
+        <option>JANPURAEXT</option>
+        <option>NBCCARAVAL</option>
+      </select>
+    </div>
 
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                // Remove active class from all links
-                navLinks.forEach(l => l.classList.remove('active'));
-                // Add active class to clicked link
-                this.classList.add('active');
+    <nav class="nav-main" aria-label="Primary">
+      <ul>
+        <li><a href="#" class="active" data-tab="home" role="button" aria-controls="home"
+            aria-selected="true"><i class="fas fa-home"></i><span>Home</span></a></li>
+        <li><a href="#" data-tab="projectinfo" role="button" aria-controls="projectinfo"
+            aria-selected="false"><i class="fas fa-info-circle"></i><span>Project Info</span></a></li>
+        <li><a href="#" data-tab="workactivity" role="button" aria-controls="workactivity"><i
+              class="fas fa-tasks"></i><span>Work Activity</span></a></li>
+        <li><a href="#" data-tab="finance" role="button" aria-controls="finance"><i
+              class="fas fa-dollar-sign"></i><span>Finance</span></a></li>
+        <li><a href="#" data-tab="manpower" role="button" aria-controls="manpower"><i
+              class="fas fa-users"></i><span>Manpower</span></a></li>
+        <li><a href="#" data-tab="staff" role="button" aria-controls="staff"><i
+              class="fas fa-user-check"></i><span>Staff Record</span></a></li>
+        <li><a href="#" data-tab="materialreceived" role="button" aria-controls="materialreceived"><i
+              class="fas fa-truck-loading"></i><span>Material Received</span></a></li>
+        <li><a href="#" data-tab="materialconsumption" role="button" aria-controls="materialconsumption"><i
+              class="fas fa-chart-bar"></i><span>Material Consumption</span></a></li>
+        <li><a href="#" data-tab="images" role="button" aria-controls="images"><i
+              class="fas fa-images"></i><span>Images</span></a></li>
+        <li><a href="#" data-tab="compare" role="button" aria-controls="compare"><i
+              class="fas fa-exchange-alt"></i><span>Compare Images</span></a></li>
+      </ul>
+    </nav>
 
-                // Hide all tab contents
-                tabContents.forEach(content => content.classList.remove('active'));
-                // Show selected tab content
-                const tabId = this.getAttribute('data-tab');
-                document.getElementById(tabId).classList.add('active');
-            });
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <p>Welcome, Rohan</p>
+        <button id="logoutBtn" class="btn btn-outline-light btn-sm">Logout</button>
+      </div>
+      <button id="darkToggle" class="dark-toggle" aria-label="Toggle dark mode"><i id="darkIcon" class="fas fa-moon"
+          aria-hidden="true"></i></button>
+    </div>
+  </aside>
+
+  <!-- floating bottom arrow (positioned by JS) -->
+  <button id="sidebarToggleBtn" class="sidebar-toggle-bottom" aria-label="Open or close sidebar">
+    <i id="sidebarToggleIcon" class="fas fa-chevron-left" aria-hidden="true"></i>
+  </button>
+
+  <main id="mainContent" class="main-content">
+    <div class="tab-content">
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="refresh-spinner"></div>
+      </div>
+      <div id="home" class="tab-pane show active" role="tabpanel">
+       
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <h3 class="alert-heading"><i class="fas fa-building me-2"></i>Welcome to Bootes Impex Tech Ltd</h3>
+        
+        </div>
+      </div>
+      <div id="projectinfo" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-info-circle"></i> Project Info</h2>
+        
+        <!-- Sub-tabs for Project Info -->
+        <ul class="nav nav-tabs" id="projectInfoTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="projectName-tab" data-bs-toggle="tab" data-bs-target="#projectName" type="button" role="tab" aria-controls="projectName" aria-selected="true">
+              <i class="fas fa-building"></i> Project Name
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="projectLocation-tab" data-bs-toggle="tab" data-bs-target="#projectLocation" type="button" role="tab" aria-controls="projectLocation" aria-selected="false">
+              <i class="fas fa-map-marker-alt"></i> Project Location
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="projectBid-tab" data-bs-toggle="tab" data-bs-target="#projectBid" type="button" role="tab" aria-controls="projectBid" aria-selected="false">
+              <i class="fas fa-money-bill-wave"></i> Project Bid
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="startingDate-tab" data-bs-toggle="tab" data-bs-target="#startingDate" type="button" role="tab" aria-controls="startingDate" aria-selected="false">
+              <i class="fas fa-calendar-plus"></i> Starting Date
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="endingDate-tab" data-bs-toggle="tab" data-bs-target="#endingDate" type="button" role="tab" aria-controls="endingDate" aria-selected="false">
+              <i class="fas fa-calendar-check"></i> Ending Date
+            </button>
+          </li>
+        </ul>
+        
+        <div class="tab-content" id="projectInfoTabsContent">
+          <div class="tab-pane fade show active" id="projectName" role="tabpanel" aria-labelledby="projectName-tab">
+            <div class="card border-primary shadow-sm mt-3">
+              <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-building"></i> Project Name</h5>
+              </div>
+              <div class="card-body">
+                <p class="h4 text-primary">GDLV Project</p>
+                <p class="text-muted">This is the current selected project name. It updates based on the project selector.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="projectLocation" role="tabpanel" aria-labelledby="projectLocation-tab">
+            <div class="card border-success shadow-sm mt-3">
+              <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-map-marker-alt"></i> Project Location</h5>
+              </div>
+              <div class="card-body">
+                <p class="h5 text-success">Location: Mumbai, Maharashtra</p>
+                <div class="embed-responsive embed-responsive-16by9">
+                  <iframe class="embed-responsive-item" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.972!2d72.8777!3d19.0760!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c6306644edc1%3A0x5da4ed8f8d648c69!2sMumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="projectBid" role="tabpanel" aria-labelledby="projectBid-tab">
+            <div class="card border-warning shadow-sm mt-3">
+              <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0"><i class="fas fa-money-bill-wave"></i> Project Bid</h5>
+              </div>
+              <div class="card-body">
+                <p class="h4 text-warning">Bid Amount: ₹ 50,00,000</p>
+                <div class="progress mt-3" style="height: 20px;">
+                  <div class="progress-bar bg-warning" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">75% Funded</div>
+                </div>
+                <p class="mt-2 text-muted">Project bid details and funding status.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="startingDate" role="tabpanel" aria-labelledby="startingDate-tab">
+            <div class="card border-info shadow-sm mt-3">
+              <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-calendar-plus"></i> Starting Date</h5>
+              </div>
+              <div class="card-body">
+                <p class="h5 text-info">Start Date: January 1, 2024</p>
+                <div class="alert alert-info">
+                  <i class="fas fa-info-circle"></i> The project commenced on this date. All timelines are calculated from here.
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="endingDate" role="tabpanel" aria-labelledby="endingDate-tab">
+            <div class="card border-danger shadow-sm mt-3">
+              <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0"><i class="fas fa-calendar-check"></i> Ending Date</h5>
+              </div>
+              <div class="card-body">
+                <p class="h5 text-danger">End Date: December 31, 2025</p>
+                <div class="alert alert-danger">
+                  <i class="fas fa-exclamation-triangle"></i> Project deadline. Ensure all milestones are met by this date.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="workactivity" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-tasks"></i> Work Activity</h2>
+        
+        <!-- Sub-tabs for Work Activity -->
+        <ul class="nav nav-tabs" id="workActivityTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="currentWork-tab" data-bs-toggle="tab" data-bs-target="#currentWork" type="button" role="tab" aria-controls="currentWork" aria-selected="true">
+              <i class="fas fa-cogs"></i> Current Work
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="sitePlan-tab" data-bs-toggle="tab" data-bs-target="#sitePlan" type="button" role="tab" aria-controls="sitePlan" aria-selected="false">
+              <i class="fas fa-map"></i> Site Plan
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="mspPlan-tab" data-bs-toggle="tab" data-bs-target="#mspPlan" type="button" role="tab" aria-controls="mspPlan" aria-selected="false">
+              <i class="fas fa-project-diagram"></i> MSP Plan
+            </button>
+          </li>
+        </ul>
+        
+        <div class="tab-content" id="workActivityTabsContent">
+          <div class="tab-pane fade show active" id="currentWork" role="tabpanel" aria-labelledby="currentWork-tab">
+            <div class="card border-primary shadow-sm mt-3">
+              <div class="card-header bg-primary text-white d-flex align-items-center">
+                <img src="Bootes Logo.png" alt="Bootes Logo" class="me-2" style="height: 30px; width: 30px;">
+                <h5 class="card-title mb-0"><i class="fas fa-cogs"></i> Current Work</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">Ongoing activities and progress updates.</p>
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Foundation Work</h6>
+                    <div class="progress mb-3">
+                      <div class="progress-bar bg-primary" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">80%</div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Structural Work</h6>
+                    <div class="progress mb-3">
+                      <div class="progress-bar bg-success" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                    </div>
+                  </div>
+                </div>
+                <p>Advanced analytics and visualizations for daily work tracking.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="sitePlan" role="tabpanel" aria-labelledby="sitePlan-tab">
+            <div class="card border-success shadow-sm mt-3">
+              <div class="card-header bg-success text-white d-flex align-items-center">
+                <img src="Bootes Logo.png" alt="Bootes Logo" class="me-2" style="height: 30px; width: 30px;">
+                <h5 class="card-title mb-0"><i class="fas fa-map"></i> Site Plan</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">Detailed site layout and planning.</p>
+                <div class="text-center">
+                  <img src="https://via.placeholder.com/600x400?text=Site+Plan" alt="Site Plan" class="img-fluid rounded shadow">
+                </div>
+                <p class="mt-3">This section includes the architectural and engineering plans for the site.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="mspPlan" role="tabpanel" aria-labelledby="mspPlan-tab">
+            <div class="card border-warning shadow-sm mt-3">
+              <div class="card-header bg-warning text-dark d-flex align-items-center">
+                <img src="Bootes Logo.png" alt="Bootes Logo" class="me-2" style="height: 30px; width: 30px;">
+                <h5 class="card-title mb-0"><i class="fas fa-project-diagram"></i> MSP Plan</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">Master Schedule Plan for project milestones.</p>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Phase 1: Planning
+                    <span class="badge bg-primary rounded-pill">Completed</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Phase 2: Construction
+                    <span class="badge bg-success rounded-pill">In Progress</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Phase 3: Finishing
+                    <span class="badge bg-warning rounded-pill">Upcoming</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Phase 4: Handover
+                    <span class="badge bg-secondary rounded-pill">Pending</span>
+                  </li>
+                </ul>
+                <p class="mt-3">Track project phases and timelines with our MSP.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="finance" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-dollar-sign"></i> Finance</h2>
+        
+        <!-- Sub-tabs for Finance -->
+        <ul class="nav nav-tabs" id="financeTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="paymentReceived-tab" data-bs-toggle="tab" data-bs-target="#paymentReceived" type="button" role="tab" aria-controls="paymentReceived" aria-selected="true">
+              <i class="fas fa-credit-card"></i> Payment Received
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="siteExpense-tab" data-bs-toggle="tab" data-bs-target="#siteExpense" type="button" role="tab" aria-controls="siteExpense" aria-selected="false">
+              <i class="fas fa-receipt"></i> Site Expense
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pettyCash-tab" data-bs-toggle="tab" data-bs-target="#pettyCash" type="button" role="tab" aria-controls="pettyCash" aria-selected="false">
+              <i class="fas fa-wallet"></i> Petty Cash
+            </button>
+          </li>
+        </ul>
+        
+        <div class="tab-content" id="financeTabsContent">
+          <div class="tab-pane fade show active" id="paymentReceived" role="tabpanel" aria-labelledby="paymentReceived-tab">
+            <div class="card border-success shadow-sm mt-3">
+              <div class="card-header bg-success text-white d-flex align-items-center">
+                <img src="Bootes Logo.png" alt="Bootes Logo" class="me-2" style="height: 30px; width: 30px;">
+                <h5 class="card-title mb-0"><i class="fas fa-credit-card"></i> Payment Received</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">Track all incoming payments and invoices.</p>
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>2024-01-15</td>
+                        <td>₹ 10,00,000</td>
+                        <td>Client A</td>
+                        <td><span class="badge bg-success">Received</span></td>
+                      </tr>
+                      <tr>
+                        <td>2024-02-20</td>
+                        <td>₹ 5,00,000</td>
+                        <td>Client B</td>
+                        <td><span class="badge bg-success">Received</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="mt-3">Total Received: <strong>₹ 15,00,000</strong></p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="siteExpense" role="tabpanel" aria-labelledby="siteExpense-tab">
+            <div class="card border-warning shadow-sm mt-3">
+              <div class="card-header bg-warning text-dark d-flex align-items-center">
+                <img src="Bootes Logo.png" alt="Bootes Logo" class="me-2" style="height: 30px; width: 30px;">
+                <h5 class="card-title mb-0"><i class="fas fa-receipt"></i> Site Expense</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">Monitor site-related expenditures.</p>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="card text-center">
+                      <div class="card-body">
+                        <h6>Materials</h6>
+                        <p class="h4 text-warning">₹ 2,50,000</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card text-center">
+                      <div class="card-body">
+                        <h6>Labor</h6>
+                        <p class="h4 text-warning">₹ 3,00,000</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card text-center">
+                      <div class="card-body">
+                        <h6>Equipment</h6>
+                        <p class="h4 text-warning">₹ 1,50,000</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-3">Total Site Expenses: <strong>₹ 7,00,000</strong></p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tab-pane fade" id="pettyCash" role="tabpanel" aria-labelledby="pettyCash-tab">
+            <div class="card border-info shadow-sm mt-3">
+              <div class="card-header bg-info text-white d-flex align-items-center">
+                <img src="Bootes Logo.png" alt="Bootes Logo" class="me-2" style="height: 30px; width: 30px;">
+                <h5 class="card-title mb-0"><i class="fas fa-wallet"></i> Petty Cash</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">Small expenses and reimbursements.</p>
+                <div class="alert alert-info">
+                  <i class="fas fa-info-circle"></i> Petty cash balance: <strong>₹ 25,000</strong>
+                </div>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item d-flex justify-content-between">
+                    Stationery <span>₹ 500</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between">
+                    Transportation <span>₹ 1,200</span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between">
+                    Miscellaneous <span>₹ 300</span>
+                  </li>
+                </ul>
+                <p class="mt-3">Recent transactions and approvals.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="manpower" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-users"></i> Manpower</h2>
+        <p>Manpower details and attendance.</p>
+      </div>
+
+      <div id="staff" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-user-check"></i> Staff</h2>
+        <p>Staff records.</p>
+      </div>
+
+      <div id="materialreceived" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-truck-loading"></i> Material Received</h2>
+        <p>Received materials.</p>
+      </div>
+
+      <div id="materialconsumption" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-chart-bar"></i> Material Consumption</h2>
+
+        <div class="row mb-4">
+          <div class="col-lg-4 col-md-6 col-12">
+            <label for="materialSelect" class="form-label fw-bold">Select Material</label>
+            <select id="materialSelect" class="form-select" aria-label="Select Material for Consumption Data">
+              <option selected>TMT Steel</option>
+              <option>RMC</option>
+              <option>Cement</option>
+              <option>Aggregate</option>
+              <option>Sand</option>
+              <option>Binding Wire</option>
+              <option>Bricks</option>
+              <option>Diesel</option>
+              <option>AAC Block</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row mb-5">
+          <div class="col-xl-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="100">
+            <div class="card shadow-sm border-start border-primary border-5 h-100">
+              <div class="card-body">
+                <h6 class="text-primary text-uppercase fw-bold mb-1">Total Received</h6>
+                <div class="h5 mb-0 fw-bold text-gray-800" id="totalReceived">0.00 MT</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="200">
+            <div class="card shadow-sm border-start border-success border-5 h-100">
+              <div class="card-body">
+                <h6 class="text-success text-uppercase fw-bold mb-1">Total Consumption</h6>
+                <div class="h5 mb-0 fw-bold text-gray-800" id="totalConsumption">0.00 MT</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="300">
+            <div class="card shadow-sm border-start border-warning border-5 h-100">
+              <div class="card-body">
+                <h6 class="text-warning text-uppercase fw-bold mb-1">Balance Stock</h6>
+                <div class="h5 mb-0 fw-bold text-gray-800" id="balanceStock">0.00 MT</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-3 col-md-6 mb-3" data-aos="fade-up" data-aos-delay="400">
+            <div class="card shadow-sm border-start border-danger border-5 h-100">
+              <div class="card-body">
+                <h6 class="text-danger text-uppercase fw-bold mb-1">Total Cost</h6>
+                <div class="h5 mb-0 fw-bold text-gray-800" id="totalCost">₹ 0.00</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p>Material consumption analytics.</p>
+        <div class="bg-light p-3 rounded" style="min-height:300px;">
+          Consumption Data Visualization for <span id="currentMaterial">TMT Steel</span>
+        </div>
+      </div>
+
+
+      <div id="images" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-images"></i> Images</h2>
+        <p>Image gallery & uploads.</p>
+      </div>
+
+      <div id="compare" class="tab-pane fade" role="tabpanel">
+        <h2><i class="fas fa-exchange-alt"></i> Compare Images</h2>
+        <p>Image comparison tool.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+  <script>
+    AOS.init({ duration: 800, once: true });
+
+    // elements
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const bottomToggle = document.getElementById('sidebarToggleBtn');
+    const bottomIcon = document.getElementById('sidebarToggleIcon');
+    const topToggle = document.getElementById('toggleBtn');
+    const projectSelect = document.getElementById('projectSelect');
+    const heroTitle = document.getElementById('heroTitle');
+    const darkToggle = document.getElementById('darkToggle');
+    const darkIcon = document.getElementById('darkIcon');
+
+    const navLinks = document.querySelectorAll('.nav-main a');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    // helpers for positions
+    function setBottomTogglePosition() {
+      const w = window.innerWidth;
+      if (w <= 768) {
+        bottomToggle.style.left = '20px';
+        return;
+      }
+      if (sidebar.classList.contains('collapsed')) {
+        bottomToggle.style.left = '72px';
+      } else {
+        bottomToggle.style.left = '284px';
+      }
+    }
+
+    // update bottom icon
+    function updateBottomIcon() {
+      const w = window.innerWidth;
+      if (w <= 768) {
+        bottomIcon.className = sidebar.classList.contains('open') ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
+        return;
+      }
+      bottomIcon.className = sidebar.classList.contains('collapsed') ? 'fas fa-chevron-right' : 'fas fa-chevron-left';
+    }
+
+    // toggle sidebar (mobile slide, desktop collapse)
+    function toggleSidebar(forceClose) {
+      const w = window.innerWidth;
+      const isOpen = sidebar.classList.contains('open');
+      const isCollapsed = sidebar.classList.contains('collapsed');
+
+      if (w <= 768) {
+        if (forceClose === false || isOpen) {
+          sidebar.classList.remove('open');
+          document.body.classList.remove('sidebar-open');
+        } else {
+          sidebar.classList.add('open');
+          document.body.classList.add('sidebar-open');
+        }
+        sidebar.classList.remove('collapsed');
+        mainContent.classList.remove('sidebar-collapsed');
+        setBottomTogglePosition();
+        updateBottomIcon();
+        return;
+      }
+
+      if (forceClose === false) {
+        sidebar.classList.add('collapsed');
+        mainContent.classList.add('sidebar-collapsed');
+      } else {
+        if (isCollapsed) {
+          sidebar.classList.remove('collapsed');
+          mainContent.classList.remove('sidebar-collapsed');
+        } else {
+          sidebar.classList.add('collapsed');
+          mainContent.classList.add('sidebar-collapsed');
+        }
+      }
+
+      setBottomTogglePosition();
+      updateBottomIcon();
+      initTooltips();
+    }
+
+    // close mobile
+    function closeMobileSidebar() {
+      if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
+      }
+      setBottomTogglePosition();
+      updateBottomIcon();
+      initTooltips();
+    }
+
+    // clicking outside closes mobile sidebar
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && sidebar.classList.contains('open') &&
+        e.target.closest('#sidebar') === null && e.target.closest('#toggleBtn') === null && e.target.closest('#sidebarToggleBtn') === null) {
+        closeMobileSidebar();
+      }
+    });
+
+    // escape key closes mobile
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMobileSidebar();
+    });
+
+    // keep consistent on resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.remove('collapsed');
+        mainContent.classList.remove('sidebar-collapsed');
+      } else {
+        sidebar.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
+      }
+      setBottomTogglePosition();
+      updateBottomIcon();
+      initTooltips();
+    });
+
+    // bottom toggle click
+    bottomToggle.addEventListener('click', () => toggleSidebar());
+
+    // top toggle (mobile)
+    topToggle && topToggle.addEventListener('click', () => toggleSidebar());
+
+    // init position/icon
+    setBottomTogglePosition();
+    updateBottomIcon();
+
+    /* -------------------------
+       NAV LINK: switching tabs
+       ------------------------- */
+    function activateTab(tabId, clickedLink) {
+      // Show loading overlay
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      loadingOverlay.classList.add('show');
+
+      // Simulate refresh delay
+      setTimeout(() => {
+        navLinks.forEach(a => {
+          a.classList.remove('active');
+          a.setAttribute('aria-selected', 'false');
         });
-
-        // Sidebar toggle functionality
-        const toggleBtn = document.getElementById('toggleBtn');
-        const sidebar = document.getElementById('sidebar');
-
-        toggleBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('collapsed');
-            this.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+        if (clickedLink) {
+          clickedLink.classList.add('active');
+          clickedLink.setAttribute('aria-selected', 'true');
+        }
+        tabPanes.forEach(p => {
+          p.classList.remove('show', 'active');
         });
+        const target = document.getElementById(tabId);
+        if (target) {
+          target.classList.add('show', 'active');
+        }
 
-        // Project select functionality
-        const projectSelect = document.getElementById('projectSelect');
-        projectSelect.addEventListener('change', function() {
-            const headerTitle = document.querySelector('.header h1');
-            headerTitle.textContent = `Welcome to ${this.options[this.selectedIndex].text} Project`;
-        });
-    </script>
+        // Hide loading overlay
+        loadingOverlay.classList.remove('show');
+      }, 800); // 800ms delay for the refresh effect
+    }
+
+    navLinks.forEach(link => {
+      const labelSpan = link.querySelector('span');
+      if (labelSpan) {
+        const txt = labelSpan.textContent.trim();
+        link.setAttribute('title', txt);
+        link.setAttribute('data-bs-toggle', 'tooltip');
+        link.setAttribute('data-bs-placement', 'right');
+      }
+
+      link.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const tab = link.getAttribute('data-tab');
+        if (!tab) return;
+        activateTab(tab, link);
+        if (window.innerWidth <= 768) {
+          sidebar.classList.remove('open');
+          document.body.classList.remove('sidebar-open');
+        }
+      });
+
+      link.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          link.click();
+        }
+      });
+    });
+
+    /* -------------------------
+       Tooltips for collapsed state
+       ------------------------- */
+    let tooltipInstances = [];
+    function initTooltips() {
+      tooltipInstances.forEach(inst => inst.dispose && inst.dispose());
+      tooltipInstances = [];
+
+      const enableTooltip = sidebar.classList.contains('collapsed') && window.innerWidth > 768;
+
+      navLinks.forEach(link => {
+        if (enableTooltip) {
+          const tip = new bootstrap.Tooltip(link, { container: 'body' });
+          tooltipInstances.push(tip);
+        } else {
+          const prev = bootstrap.Tooltip.getInstance(link);
+          if (prev) prev.dispose();
+        }
+      });
+    }
+    initTooltips();
+
+    /* -------------------------
+       PROJECT SELECT: only update HERO
+       ------------------------- */
+    const projectFullNames = {
+      'GDLV': 'Government District Library Varanasi',
+      'HKD': 'Hotel Kapasheda',
+      'HIH': 'Haryana Habitat Centre Panchkula',
+      'B-47': 'B-47',
+      'SLH': 'Lete Hunuman Mandir',
+      'RWH': 'Rewari Ware House',
+      'RSTF': 'Rashmi Sharma Tele Films',
+      'JEX': 'Jhansi Exhibition Centre',
+      'SBGM': 'Geeta Meuseum HR',
+      'VRI': 'Vrindavan Residence',
+      'JANPURAEXT': 'Janpura Extension',
+      'NBCCARAVAL': 'NBCC Aravali Apartments'
+    };
+
+    projectSelect.addEventListener('change', (e) => {
+      const pr = e.target.value;
+      heroTitle.textContent = `Welcome to ${projectFullNames[pr] || pr}`;
+      // Note: We intentionally DO NOT update tab headings here so they stay static
+
+      // Refresh the current active tab to simulate loading new project data
+      const activeLink = document.querySelector('.nav-main a.active');
+      if (activeLink) {
+        const currentTab = activeLink.getAttribute('data-tab');
+        activateTab(currentTab, activeLink);
+      }
+    });
+
+    /* -------------------------
+       DARK THEME STORAGE
+       ------------------------- */
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      if (document.body.classList.contains('dark-mode')) {
+        darkIcon.classList.remove('fa-moon'); darkIcon.classList.add('fa-sun');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        darkIcon.classList.remove('fa-sun'); darkIcon.classList.add('fa-moon');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+    (function () {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        darkIcon.classList.remove('fa-moon'); darkIcon.classList.add('fa-sun');
+      }
+    })();
+
+    /* -------------------------
+       LOGOUT BUTTON
+       ------------------------- */
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('userName');
+      window.location.href = 'login-register-form.html';
+    });
+
+    /* -------------------------
+       USER NAME DISPLAY
+       ------------------------- */
+    const userName = localStorage.getItem('userName') || 'User';
+    document.querySelector('.user-info p').textContent = `Welcome, ${userName}`;
+
+    // Set initial hero title based on selected project
+    const initialPr = projectSelect.value;
+    heroTitle.textContent = `Welcome to ${projectFullNames[initialPr] || initialPr}`;
+
+    
+  </script>
 </body>
+
 </html>
